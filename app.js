@@ -94,7 +94,11 @@ function playAudioSequence(paths, callback = null) {
   function playNext() {
     if (index >= paths.length) {
       activeAudioPlayer = null;
-      if (callback) callback();
+      if (callback) {
+        const cb = callback;
+        callback = null; // Ensure callback is only called once
+        cb();
+      }
       return;
     }
 
@@ -104,18 +108,26 @@ function playAudioSequence(paths, callback = null) {
     const audio = new Audio(path);
     activeAudioPlayer = audio;
 
-    audio.onended = () => {
+    let resolved = false;
+
+    function handleNext() {
+      if (resolved) return;
+      resolved = true;
+      audio.onended = null;
+      audio.onerror = null;
       playNext();
-    };
+    }
+
+    audio.onended = handleNext;
 
     audio.onerror = (e) => {
       console.warn("Audio sequence item failed:", path, e);
-      playNext();
+      handleNext();
     };
 
     audio.play().catch(e => {
       console.warn("Audio sequence item playback blocked:", path, e);
-      playNext();
+      handleNext();
     });
   }
 
@@ -128,31 +140,31 @@ function playAudioSequence(paths, callback = null) {
 function speakQuestion(qNum, num1, op, num2, callback = null) {
   const opFile = op === '+' ? 'plus.wav' : 'minus.wav';
   const paths = [
-    `audio/dai.wav`,
-    `audio/num_${qNum}.wav`,
-    `audio/mon.wav`,
-    `audio/num_${num1}.wav`,
-    `audio/${opFile}`,
-    `audio/num_${num2}.wav`,
-    `audio/wa.wav`,
-    `audio/ikutsukana.wav`
+    `dai.wav`,
+    `num_${qNum}.wav`,
+    `mon.wav`,
+    `num_${num1}.wav`,
+    `${opFile}`,
+    `num_${num2}.wav`,
+    `wa.wav`,
+    `ikutsukana.wav`
   ];
   playAudioSequence(paths, callback);
 }
 
 function speakPraise(callback = null) {
   const randomIndex = Math.floor(Math.random() * 5); // 0 to 4
-  const paths = [`audio/praise_${randomIndex}.wav`];
+  const paths = [`praise_${randomIndex}.wav`];
   playAudioSequence(paths, callback);
 }
 
 function speakEncourage(correctAnswer, callback = null) {
   const randomIndex = Math.floor(Math.random() * 4); // 0 to 3
   const paths = [
-    `audio/encourage_${randomIndex}.wav`,
-    `audio/kotaewane.wav`,
-    `audio/num_${correctAnswer}.wav`,
-    `audio/dayo.wav`
+    `encourage_${randomIndex}.wav`,
+    `kotaewane.wav`,
+    `num_${correctAnswer}.wav`,
+    `dayo.wav`
   ];
   playAudioSequence(paths, callback);
 }
@@ -166,7 +178,7 @@ function speakResult(correctCount, callback = null) {
   } else if (correctCount >= 5) {
     file = 'result_5.wav';
   }
-  playAudioSequence([`audio/${file}`], callback);
+  playAudioSequence([`${file}`], callback);
 }
 
 
