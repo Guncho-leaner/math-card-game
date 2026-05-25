@@ -1,0 +1,767 @@
+@import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&family=Outfit:wght@400;600;800&display=swap');
+
+/* ==========================================
+   1. DESIGN SYSTEM & CSS VARIABLES
+   ========================================== */
+:root {
+  /* Color Palette - Vibrant, premium, kid-friendly pastel HSL colors */
+  --hue-pink: 345;
+  --hue-orange: 25;
+  --hue-yellow: 48;
+  --hue-green: 145;
+  --hue-blue: 205;
+  --hue-purple: 270;
+
+  --color-pink: hsl(var(--hue-pink), 95%, 68%);
+  --color-pink-dark: hsl(var(--hue-pink), 90%, 55%);
+  --color-pink-light: hsl(var(--hue-pink), 100%, 94%);
+  
+  --color-orange: hsl(var(--hue-orange), 95%, 64%);
+  --color-orange-dark: hsl(var(--hue-orange), 90%, 50%);
+
+  --color-yellow: hsl(var(--hue-yellow), 100%, 65%);
+  --color-yellow-dark: hsl(var(--hue-yellow), 90%, 50%);
+
+  --color-green: hsl(var(--hue-green), 75%, 55%);
+  --color-green-dark: hsl(var(--hue-green), 80%, 40%);
+  --color-green-light: hsl(var(--hue-green), 90%, 93%);
+
+  --color-blue: hsl(var(--hue-blue), 90%, 62%);
+  --color-blue-dark: hsl(var(--hue-blue), 85%, 48%);
+  --color-blue-light: hsl(var(--hue-blue), 100%, 93%);
+
+  --color-purple: hsl(var(--hue-purple), 85%, 68%);
+  --color-purple-dark: hsl(var(--hue-purple), 80%, 55%);
+
+  --color-bg-base: hsl(208, 100%, 97%);
+  --color-bg-card: hsl(0, 0%, 100%);
+  --color-text-main: hsl(210, 50%, 15%);
+  --color-text-muted: hsl(210, 25%, 45%);
+
+  /* UI Tokens */
+  --font-kids: 'M PLUS Rounded 1c', sans-serif;
+  --font-math: 'Outfit', sans-serif;
+  --radius-lg: 32px;
+  --radius-md: 20px;
+  --radius-sm: 12px;
+  --shadow-sm: 0 4px 0 rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 8px 0 rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 0 20px rgba(255, 255, 255, 0.6);
+  --transition-pop: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* ==========================================
+   2. GLOBAL STYLES & RESET
+   ========================================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: var(--font-kids);
+  background-color: var(--color-bg-base);
+  background-image: 
+    radial-gradient(circle at 10% 20%, hsla(var(--hue-blue), 100%, 93%, 0.6) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, hsla(var(--hue-pink), 100%, 94%, 0.6) 0%, transparent 40%),
+    radial-gradient(circle at 50% 50%, hsla(var(--hue-yellow), 100%, 96%, 0.8) 0%, transparent 100%);
+  background-size: cover;
+  background-attachment: fixed;
+  color: var(--color-text-main);
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-x: hidden;
+}
+
+/* Mobile viewport constraint */
+.app-container {
+  width: 100%;
+  max-width: 480px;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Base card styling with glassmorphism */
+.glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 4px solid #ffffff;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 16px 32px rgba(31, 38, 135, 0.08), var(--shadow-sm);
+  padding: 32px 24px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: var(--transition-pop);
+}
+
+/* ==========================================
+   3. TYPOGRAPHY & HEADINGS
+   ========================================== */
+h1 {
+  font-size: 2.2rem;
+  font-weight: 900;
+  line-height: 1.2;
+  color: var(--color-pink-dark);
+  text-shadow: 2px 2px 0px #ffffff, 4px 4px 0px rgba(0,0,0,0.05);
+  margin-bottom: 8px;
+}
+
+h2 {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: var(--color-blue-dark);
+  margin-bottom: 12px;
+}
+
+p {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+/* ==========================================
+   4. INTERACTIVE BUTTONS (3D Pop effect)
+   ========================================== */
+.btn-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  margin-top: 24px;
+}
+
+.btn {
+  font-family: var(--font-kids);
+  font-size: 1.2rem;
+  font-weight: 900;
+  padding: 16px 32px;
+  border-radius: var(--radius-md);
+  border: 3px solid #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  position: relative;
+  text-decoration: none;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  user-select: none;
+}
+
+/* Pink Start Button */
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-pink), var(--color-pink-dark));
+  color: #ffffff;
+  box-shadow: 0 8px 0 var(--color-pink-dark), 0 12px 20px rgba(240, 98, 146, 0.3);
+}
+
+.btn-primary:active {
+  transform: translateY(6px);
+  box-shadow: 0 2px 0 var(--color-pink-dark), 0 4px 10px rgba(240, 98, 146, 0.3);
+}
+
+/* Blue Tutorial Button */
+.btn-secondary {
+  background: linear-gradient(135deg, var(--color-blue), var(--color-blue-dark));
+  color: #ffffff;
+  box-shadow: 0 8px 0 var(--color-blue-dark), 0 12px 20px rgba(66, 165, 245, 0.3);
+}
+
+.btn-secondary:active {
+  transform: translateY(6px);
+  box-shadow: 0 2px 0 var(--color-blue-dark), 0 4px 10px rgba(66, 165, 245, 0.3);
+}
+
+/* Yellow Action Button */
+.btn-accent {
+  background: linear-gradient(135deg, var(--color-yellow), var(--color-yellow-dark));
+  color: var(--color-text-main);
+  box-shadow: 0 8px 0 var(--color-yellow-dark), 0 12px 20px rgba(253, 216, 53, 0.2);
+}
+
+.btn-accent:active {
+  transform: translateY(6px);
+  box-shadow: 0 2px 0 var(--color-yellow-dark), 0 4px 10px rgba(253, 216, 53, 0.2);
+}
+
+/* Icon placement inside button */
+.btn-icon {
+  font-size: 1.5rem;
+}
+
+/* ==========================================
+   5. SCREEN STATE STYLING
+   ========================================== */
+.screen {
+  display: none;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-grow: 1;
+}
+
+.screen.active {
+  display: flex;
+  animation: fadeIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.15) forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Selection steps inside screen-select */
+.select-step {
+  display: none;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+}
+
+.select-step.active {
+  display: flex;
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* ==========================================
+   6. TITLE SCREEN
+   ========================================== */
+
+.title-mascot-container {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  margin: 16px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.title-badge {
+  background: var(--color-yellow);
+  color: var(--color-text-main);
+  font-size: 0.9rem;
+  font-weight: 900;
+  padding: 6px 16px;
+  border-radius: 50px;
+  border: 3px solid #ffffff;
+  box-shadow: var(--shadow-sm);
+  transform: rotate(-4deg);
+  margin-bottom: 12px;
+}
+
+/* ==========================================
+   7. GAME SCREEN
+   ========================================== */
+/* Header & Progress Bar */
+.game-header {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 900;
+  font-size: 1.1rem;
+  color: var(--color-blue-dark);
+}
+
+.progress-bar-bg {
+  width: 100%;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 3px solid #ffffff;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.progress-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--color-green), hsl(var(--hue-green), 90%, 65%));
+  border-radius: 20px;
+  transition: width 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.25);
+}
+
+/* Math Card */
+.math-card {
+  width: 100%;
+  background: radial-gradient(circle at center, #ffffff 0%, hsl(200, 100%, 98%) 100%);
+  border: 4px solid var(--color-blue-light);
+  border-radius: var(--radius-lg);
+  padding: 32px 16px;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.04), inset 0 0 20px rgba(255, 255, 255, 0.6);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.mascot-display {
+  width: 100%;
+  height: 160px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: var(--transition-pop);
+}
+
+/* Cute jumping animal animation when correct */
+.mascot-display.jump {
+  animation: jumpMascot 0.6s ease-out;
+}
+
+@keyframes jumpMascot {
+  0%, 100% { transform: translateY(0) scale(1); }
+  30% { transform: translateY(-40px) scale(0.9, 1.15); }
+  50% { transform: translateY(-40px) scale(1.05, 0.95); }
+  80% { transform: translateY(0) scale(1.1, 0.85); }
+}
+
+/* Shake mascot when incorrect */
+.mascot-display.shake {
+  animation: shakeMascot 0.5s ease-in-out;
+}
+
+@keyframes shakeMascot {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-12px) rotate(-4deg); }
+  40%, 80% { transform: translateX(12px) rotate(4deg); }
+}
+
+.math-equation {
+  font-family: var(--font-math);
+  font-size: 3.5rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: var(--color-text-main);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.math-question {
+  display: inline-block;
+}
+
+.math-answer-box {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 70px;
+  height: 70px;
+  border-radius: var(--radius-sm);
+  background: var(--color-blue-light);
+  border: 4px dashed var(--color-blue-dark);
+  font-size: 3.5rem;
+  color: var(--color-pink-dark);
+  transition: var(--transition-pop);
+}
+
+.math-answer-box.listening {
+  border: 4px solid var(--color-pink);
+  animation: micPulse 1.2s infinite ease-in-out;
+  background: var(--color-pink-light);
+}
+
+@keyframes micPulse {
+  0%, 100% { transform: scale(1); border-color: var(--color-pink); box-shadow: 0 0 10px rgba(240, 98, 146, 0.2); }
+  50% { transform: scale(1.05); border-color: var(--color-pink-dark); box-shadow: 0 0 25px rgba(240, 98, 146, 0.6); }
+}
+
+.math-answer-box.correct {
+  border: 4px solid var(--color-green);
+  background: var(--color-green-light);
+  color: var(--color-green-dark);
+  font-style: normal;
+  border-style: solid;
+}
+
+.math-answer-box.incorrect {
+  border: 4px solid var(--color-pink);
+  background: var(--color-pink-light);
+  color: var(--color-pink-dark);
+  border-style: solid;
+}
+
+/* Feedback message */
+.feedback-bubble {
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: var(--color-pink-dark);
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-pop);
+}
+
+/* Mic Active Indicator / Visualizer */
+.mic-status-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.mic-wave-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 40px;
+}
+
+.mic-wave-bar {
+  width: 6px;
+  height: 8px;
+  background-color: var(--color-pink);
+  border-radius: 10px;
+  transition: height 0.15s ease-out;
+}
+
+.listening .mic-wave-bar {
+  animation: waveAnimation 1.2s infinite ease-in-out;
+}
+
+.listening .mic-wave-bar:nth-child(1) { animation-delay: 0.1s; }
+.listening .mic-wave-bar:nth-child(2) { animation-delay: 0.3s; }
+.listening .mic-wave-bar:nth-child(3) { animation-delay: 0.5s; height: 24px; }
+.listening .mic-wave-bar:nth-child(4) { animation-delay: 0.2s; }
+.listening .mic-wave-bar:nth-child(5) { animation-delay: 0.4s; }
+
+@keyframes waveAnimation {
+  0%, 100% { height: 8px; }
+  50% { height: 32px; background-color: var(--color-pink-dark); }
+}
+
+.speech-status-text {
+  font-size: 0.9rem;
+  font-weight: 900;
+  color: var(--color-text-muted);
+}
+
+.speech-status-text.speech-active {
+  color: var(--color-pink-dark);
+}
+
+/* Fallback Keypad Toggle Button */
+.keypad-toggle-btn {
+  background: none;
+  border: none;
+  color: var(--color-blue-dark);
+  font-family: var(--font-kids);
+  font-size: 0.9rem;
+  font-weight: 900;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-top: 12px;
+}
+
+/* Number Pad Fallback container */
+.keypad-container {
+  display: none;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  width: 100%;
+  margin-top: 16px;
+  animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards;
+}
+
+.keypad-container.active {
+  display: grid;
+}
+
+.keypad-btn {
+  font-family: var(--font-math);
+  font-size: 1.3rem;
+  font-weight: 800;
+  padding: 10px 0;
+  background: #ffffff;
+  border: 3px solid var(--color-blue-light);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  box-shadow: 0 4px 0 var(--color-blue-light);
+  transition: transform 0.05s ease, box-shadow 0.05s ease;
+  user-select: none;
+}
+
+.keypad-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--color-blue-light);
+}
+
+.keypad-btn-clear {
+  grid-column: span 1;
+  background: var(--color-pink-light);
+  border-color: var(--color-pink);
+  box-shadow: 0 4px 0 var(--color-pink);
+  font-family: var(--font-kids);
+  font-size: 0.9rem;
+  font-weight: 900;
+  color: var(--color-pink-dark);
+}
+
+.keypad-btn-clear:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--color-pink);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================
+   8. RESULT SCREEN
+   ========================================== */
+.results-card {
+  padding: 40px 24px;
+  border-radius: var(--radius-lg);
+  border-color: var(--color-yellow);
+}
+
+.result-mascot {
+  width: 150px;
+  height: 150px;
+  margin-bottom: 16px;
+  animation: floatMascot 3s infinite ease-in-out;
+}
+
+@keyframes floatMascot {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+.score-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 20px 0;
+}
+
+.score-number {
+  font-family: var(--font-kids);
+  font-size: 3rem;
+  font-weight: 900;
+  color: var(--color-pink-dark);
+  text-shadow: 2px 2px 0px #ffffff;
+}
+
+.score-text {
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: var(--color-text-main);
+  margin-top: 8px;
+}
+
+/* Beautiful Stars Decoration */
+.stars-container {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0 24px 0;
+}
+
+.star {
+  font-size: 2rem;
+  color: #ddd;
+  text-shadow: 1px 1px 0 #fff;
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.5);
+}
+
+.star.gold {
+  color: var(--color-yellow);
+  text-shadow: 1px 1px 0 var(--color-yellow-dark);
+  transform: scale(1.2);
+  animation: starSpin 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.25) forwards;
+}
+
+@keyframes starSpin {
+  0% { transform: scale(0) rotate(-180deg); }
+  100% { transform: scale(1.2) rotate(0); }
+}
+
+/* ==========================================
+   9. MODERN DIALOG / TUTORIAL MODAL
+   ========================================== */
+dialog.tutorial-modal {
+  border: none;
+  background: none;
+  padding: 0;
+  width: calc(100% - 32px);
+  max-width: 440px;
+  margin: auto;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 24px 48px rgba(0,0,0,0.15);
+  overflow: visible;
+  outline: none;
+}
+
+/* Base state (closed) for entry/exit animation */
+dialog.tutorial-modal {
+  opacity: 0;
+  transform: scale(0.9);
+  transition-property: opacity, transform, display, overlay;
+  transition-duration: 0.3s;
+  transition-timing-function: cubic-bezier(0.175, 0.885, 0.32, 1.15);
+  transition-behavior: allow-discrete;
+}
+
+/* Open state styles */
+dialog.tutorial-modal[open] {
+  opacity: 1;
+  transform: scale(1);
+
+  @starting-style {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+/* Backdrop styles */
+dialog.tutorial-modal::backdrop {
+  background-color: rgba(0, 0, 0, 0);
+  transition:
+    display 0.3s allow-discrete,
+    overlay 0.3s allow-discrete,
+    background-color 0.3s ease-out;
+}
+
+dialog.tutorial-modal[open]::backdrop {
+  background-color: rgba(33, 43, 54, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+
+  @starting-style {
+    background-color: rgba(0, 0, 0, 0);
+  }
+}
+
+.tutorial-content {
+  background: #ffffff;
+  border: 4px solid var(--color-blue);
+  border-radius: var(--radius-lg);
+  padding: 32px 24px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tutorial-mascot {
+  width: 100px;
+  height: 100px;
+  margin-top: -70px;
+  background: #ffffff;
+  border: 4px solid var(--color-blue);
+  border-radius: 50%;
+  padding: 8px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.tutorial-body {
+  width: 100%;
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: left;
+}
+
+.tutorial-step {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.step-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-blue);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  box-shadow: 0 3px 0 var(--color-blue-dark);
+}
+
+.step-text {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--color-text-main);
+  line-height: 1.5;
+}
+
+.step-demo-box {
+  background: var(--color-blue-light);
+  border: 2px dashed var(--color-blue-dark);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  text-align: center;
+  margin-top: 4px;
+  font-family: var(--font-kids);
+  font-weight: 900;
+  color: var(--color-blue-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.tutorial-close-btn {
+  margin-top: 20px;
+  width: 100%;
+}
+
+/* Respect user preference for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  dialog.tutorial-modal,
+  .btn,
+  .mascot-display,
+  .progress-bar-fill,
+  .math-answer-box,
+  .star,
+  .mic-wave-bar {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  @starting-style {
+    dialog.tutorial-modal[open] {
+      transform: none;
+    }
+  }
+}
