@@ -76,7 +76,7 @@ function getCachedAudio(path) {
     audio.preload = 'auto';
     audioCache[path] = audio;
   }
-  return audioCache[path];
+  return audioCache[path].cloneNode(true);
 }
 
 /**
