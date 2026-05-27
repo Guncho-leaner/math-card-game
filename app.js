@@ -614,6 +614,7 @@ function startNewGame() {
   state.correctCount = 0;
   state.isAnswered = false;
   state.keypadInput = '';
+  state.nextInProgress = false; // Reset lock for new game!
   
   navigateTo('GAME');
   nextQuestion();
@@ -644,48 +645,14 @@ function nextQuestion() {
   setMascotExpression('idle');
 
   // Trigger pre-rendered high-quality local voice sequence
-  // Set operator based on chosen mode
-  state.operator = state.gameMode === 'ADDITION' ? '+' : '-';
-
-  if (state.gameMode === 'ADDITION') {
-    if (state.gameLevel === 'TERM1') {
-      // 1がっき: Answers up to 10 (A + B <= 10)
-      const correct = Math.floor(Math.random() * 9) + 2; // sum: 2 to 10
-      state.num1 = Math.floor(Math.random() * (correct - 1)) + 1; // 1 to correct-1
-      state.num2 = correct - state.num1;
-      state.correctAnswer = correct;
-    } else if (state.gameLevel === 'TERM2') {
-      // 2がっき: Answers up to 20 (mainly 11 to 20)
-      const correct = Math.floor(Math.random() * 10) + 11; // sum: 11 to 20
-      state.num1 = Math.floor(Math.random() * (correct - 2)) + 1; // 1 to correct-1
-      state.num2 = correct - state.num1;
-      state.correctAnswer = correct;
-    } else {
-      // 3がっき: Answers above 20 (double digit + single/double digit, e.g. 21 to 99)
-      state.num1 = Math.floor(Math.random() * 60) + 15; // 15 to 74
-      state.num2 = Math.floor(Math.random() * 20) + 10; // 10 to 29
-      state.correctAnswer = state.num1 + state.num2; // always > 20
+  speakQuestion(state.currentQuestion, state.num1, state.operator, state.num2, () => {
+    // Start listening AFTER speech playback has finished
+    if (state.screen === 'GAME' && !state.isAnswered) {
+      startListening();
     }
-  } else {
-    // SUBTRACTION
-    if (state.gameLevel === 'TERM1') {
-      // 1がっき: Subtraction within 10 (A <= 10, Answer >= 1)
-      state.num1 = Math.floor(Math.random() * 9) + 2; // 2 to 10
-      state.num2 = Math.floor(Math.random() * (state.num1 - 1)) + 1; // 1 to num1-1
-      state.correctAnswer = state.num1 - state.num2;
-    } else if (state.gameLevel === 'TERM2') {
-      // 2がっき: Subtraction within 20 (11 <= A <= 20, Answer >= 1)
-      state.num1 = Math.floor(Math.random() * 10) + 11; // A: 11 to 20
-      state.num2 = Math.floor(Math.random() * (state.num1 - 1)) + 1; // 1 to num1-1
-      state.correctAnswer = state.num1 - state.num2;
-    } else {
-      // 3がっき: Subtraction with answers above 20 (A - B = Answer, where Answer >= 20)
-      const correct = Math.floor(Math.random() * 50) + 20; // Answer: 20 to 69
-      state.num2 = Math.floor(Math.random() * 25) + 5; // B: 5 to 29
-      state.num1 = correct + state.num2; // A: 25 to 98
-      state.correctAnswer = correct;
-    }
-  }
+    // Release the re-entrancy lock AFTER the speaking sequence completes
+    state.nextInProgress = false;
+  });
 }
 
 function generateEquation() {
