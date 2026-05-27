@@ -65,6 +65,46 @@ const JAPANESE_NUM_MAP = {
 
 // Active audio variable to track current playing file
 let activeAudioPlayer = null;
+const audioCache = {};
+
+/**
+ * Gets or creates a cached Audio object for the given path
+ */
+function getCachedAudio(path) {
+  if (!audioCache[path]) {
+    const audio = new Audio(path);
+    audio.preload = 'auto';
+    audioCache[path] = audio;
+  }
+  return audioCache[path];
+}
+
+/**
+ * Pre-caches common structural and level audio files
+ */
+function preloadCommonAudio() {
+  const commonFiles = [
+    'dai.wav', 'mon.wav', 'wa.wav', 'ikutsukana.wav', 'plus.wav', 'minus.wav',
+    'dayo.wav', 'kotaewane.wav', 'result_10.wav', 'result_8.wav', 'result_5.wav', 'result_low.wav'
+  ];
+  
+  commonFiles.forEach(file => {
+    getCachedAudio(file);
+  });
+
+  // Preload numbers 0 to 10
+  for (let i = 0; i <= 10; i++) {
+    getCachedAudio(`num_${i}.wav`);
+  }
+
+  // Preload praise and encourage
+  for (let i = 0; i < 5; i++) {
+    getCachedAudio(`praise_${i}.wav`);
+  }
+  for (let i = 0; i < 4; i++) {
+    getCachedAudio(`encourage_${i}.wav`);
+  }
+}
 
 /**
  * Stops any active audio sequence playback
@@ -72,6 +112,8 @@ let activeAudioPlayer = null;
 function stopAllAudio() {
   if (activeAudioPlayer) {
     activeAudioPlayer.pause();
+    activeAudioPlayer.onended = null;
+    activeAudioPlayer.onerror = null;
     activeAudioPlayer = null;
   }
 }
@@ -90,11 +132,13 @@ function playAudioSequence(paths, callback = null) {
   }
 
   let index = 0;
+  let cbCalled = false; // ensure callback only once
 
   function playNext() {
     if (index >= paths.length) {
       activeAudioPlayer = null;
-      if (callback) {
+      if (callback && !cbCalled) {
+        cbCalled = true;
         const cb = callback;
         callback = null; // Ensure callback is only called once
         cb();
@@ -105,8 +149,9 @@ function playAudioSequence(paths, callback = null) {
     const path = paths[index];
     index++;
 
-    const audio = new Audio(path);
+    const audio = getCachedAudio(path);
     activeAudioPlayer = audio;
+    audio.currentTime = 0; // Reset playback position
 
     let resolved = false;
 
@@ -516,12 +561,28 @@ function setMascotExpression(expression) {
 // ==========================================
 // 4. SCREEN NAVIGATION
 // ==========================================
+/**
+ * Checks for a saved game in localStorage and toggles the visibility of the "つづきから" button.
+ */
+function checkSavedGame() {
+  const saved = localStorage.getItem('saved_game_state');
+  const resumeBtn = document.getElementById('btn-resume');
+  if (resumeBtn) {
+    if (saved) {
+      resumeBtn.style.display = 'flex';
+    } else {
+      resumeBtn.style.display = 'none';
+    }
+  }
+}
+
 function navigateTo(screenName) {
   state.screen = screenName;
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   
   if (screenName === 'TITLE') {
     document.getElementById('screen-title').classList.add('active');
+    checkSavedGame();
   } else if (screenName === 'SELECT') {
     document.getElementById('screen-select').classList.add('active');
     showSelectStep('mode');
@@ -559,8 +620,12 @@ function startNewGame() {
 }
 
 function nextQuestion() {
+  if (state.nextInProgress) return; // prevent re-entrancy
+  state.nextInProgress = true;
+
   if (state.currentQuestion >= GAME_CONFIG.totalQuestions) {
     endGame();
+    state.nextInProgress = false;
     return;
   }
 
@@ -579,12 +644,48 @@ function nextQuestion() {
   setMascotExpression('idle');
 
   // Trigger pre-rendered high-quality local voice sequence
-  speakQuestion(state.currentQuestion, state.num1, state.operator, state.num2, () => {
-    // Start listening AFTER speech playback has finished
-    if (state.screen === 'GAME' && !state.isAnswered) {
-      startListening();
+  // Set operator based on chosen mode
+  state.operator = state.gameMode === 'ADDITION' ? '+' : '-';
+
+  if (state.gameMode === 'ADDITION') {
+    if (state.gameLevel === 'TERM1') {
+      // 1がっき: Answers up to 10 (A + B <= 10)
+      const correct = Math.floor(Math.random() * 9) + 2; // sum: 2 to 10
+      state.num1 = Math.floor(Math.random() * (correct - 1)) + 1; // 1 to correct-1
+      state.num2 = correct - state.num1;
+      state.correctAnswer = correct;
+    } else if (state.gameLevel === 'TERM2') {
+      // 2がっき: Answers up to 20 (mainly 11 to 20)
+      const correct = Math.floor(Math.random() * 10) + 11; // sum: 11 to 20
+      state.num1 = Math.floor(Math.random() * (correct - 2)) + 1; // 1 to correct-1
+      state.num2 = correct - state.num1;
+      state.correctAnswer = correct;
+    } else {
+      // 3がっき: Answers above 20 (double digit + single/double digit, e.g. 21 to 99)
+      state.num1 = Math.floor(Math.random() * 60) + 15; // 15 to 74
+      state.num2 = Math.floor(Math.random() * 20) + 10; // 10 to 29
+      state.correctAnswer = state.num1 + state.num2; // always > 20
     }
-  });
+  } else {
+    // SUBTRACTION
+    if (state.gameLevel === 'TERM1') {
+      // 1がっき: Subtraction within 10 (A <= 10, Answer >= 1)
+      state.num1 = Math.floor(Math.random() * 9) + 2; // 2 to 10
+      state.num2 = Math.floor(Math.random() * (state.num1 - 1)) + 1; // 1 to num1-1
+      state.correctAnswer = state.num1 - state.num2;
+    } else if (state.gameLevel === 'TERM2') {
+      // 2がっき: Subtraction within 20 (11 <= A <= 20, Answer >= 1)
+      state.num1 = Math.floor(Math.random() * 10) + 11; // A: 11 to 20
+      state.num2 = Math.floor(Math.random() * (state.num1 - 1)) + 1; // 1 to num1-1
+      state.correctAnswer = state.num1 - state.num2;
+    } else {
+      // 3がっき: Subtraction with answers above 20 (A - B = Answer, where Answer >= 20)
+      const correct = Math.floor(Math.random() * 50) + 20; // Answer: 20 to 69
+      state.num2 = Math.floor(Math.random() * 25) + 5; // B: 5 to 29
+      state.num1 = correct + state.num2; // A: 25 to 98
+      state.correctAnswer = correct;
+    }
+  }
 }
 
 function generateEquation() {
@@ -970,6 +1071,84 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('keypad-btn-clear').addEventListener('click', clearKeypad);
 
+  // GAME CONTROL ACTIONS (中断 / やめる / つづきから)
+  const resumeBtn = document.getElementById('btn-resume');
+  if (resumeBtn) {
+    resumeBtn.addEventListener('click', () => {
+      const saved = localStorage.getItem('saved_game_state');
+      if (saved) {
+        try {
+          const savedState = JSON.parse(saved);
+          state.currentQuestion = savedState.currentQuestion;
+          state.correctCount = savedState.correctCount;
+          state.gameMode = savedState.gameMode;
+          state.gameLevel = savedState.gameLevel;
+
+          // Clear saved state now that we've loaded it
+          localStorage.removeItem('saved_game_state');
+
+          // Navigate and start
+          navigateTo('GAME');
+          
+          // Re-generate equations and setup UI
+          state.nextInProgress = false; // Ensure nextQuestion isn't locked
+          nextQuestion();
+        } catch (e) {
+          console.error("Failed to parse saved game state:", e);
+          localStorage.removeItem('saved_game_state');
+          checkSavedGame();
+        }
+      }
+    });
+  }
+
+  document.getElementById('btn-game-suspend').addEventListener('click', () => {
+    // Stop active audio and recognition
+    stopAllAudio();
+    stopListening();
+
+    // Save game state
+    // We save currentQuestion - 1 because nextQuestion will increment it by 1 when resuming
+    const savedState = {
+      currentQuestion: state.currentQuestion - 1,
+      correctCount: state.correctCount,
+      gameMode: state.gameMode,
+      gameLevel: state.gameLevel
+    };
+    localStorage.setItem('saved_game_state', JSON.stringify(savedState));
+
+    alert('ゲームを ちゅうだん しました。つぎは つづきから あそべるよ！');
+
+    // Reset temporary states
+    state.isAnswered = false;
+    state.keypadInput = '';
+
+    navigateTo('TITLE');
+  });
+
+  document.getElementById('btn-game-quit').addEventListener('click', () => {
+    if (confirm('ゲームを やめますか？ (すすんだところは きえちゃいます)')) {
+      // Stop active audio and recognition
+      stopAllAudio();
+      stopListening();
+
+      // Clear saved state
+      localStorage.removeItem('saved_game_state');
+
+      // Reset temporary states
+      state.isAnswered = false;
+      state.keypadInput = '';
+
+      navigateTo('TITLE');
+    }
+  });
+
   // Initialize title screen mascot
   document.getElementById('title-mascot-svg').style.animation = 'floatMascot 4s infinite ease-in-out';
+  
+  // Check for any saved game on load
+  checkSavedGame();
+
+  // Pre-load essential audio assets for instant playback
+  preloadCommonAudio();
 });

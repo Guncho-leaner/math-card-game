@@ -96,6 +96,10 @@
         </div>
 
         <div class="btn-container">
+          <button id="btn-resume" class="btn btn-accent" style="display: none; background: linear-gradient(135deg, var(--color-orange), var(--color-orange-dark)); box-shadow: 0 8px 0 var(--color-orange-dark); border-color: #ffffff; color: #ffffff;" aria-label="つづきからあそぶ">
+            <span class="btn-icon">⏱️</span>
+            <span>つづきから あそぶ</span>
+          </button>
           <button id="btn-start" class="btn btn-primary" aria-label="ゲームスタート">
             <span class="btn-icon">🎮</span>
             <span>スタート！</span>
@@ -230,6 +234,18 @@
           <button class="keypad-btn" data-num="9">9</button>
           <button class="keypad-btn" data-num="0">0</button>
           <button class="keypad-btn keypad-btn-clear" id="keypad-btn-clear" style="grid-column: span 5;">けす</button>
+        </div>
+
+        <!-- Game Control Buttons (中断 / やめる) -->
+        <div class="game-control-buttons" style="display: flex; gap: 12px; width: 100%; margin-top: 24px; flex-direction: row;">
+          <button id="btn-game-suspend" class="btn btn-purple" style="flex: 1; padding: 12px 0; font-size: 1.1rem;" aria-label="ゲームを中断する">
+            <span class="btn-icon">⏸️</span>
+            <span>ちゅうだん</span>
+          </button>
+          <button id="btn-game-quit" class="btn btn-outline-muted" style="flex: 1; padding: 12px 0; font-size: 1.1rem;" aria-label="ゲームをやめる">
+            <span class="btn-icon">🏠</span>
+            <span>やめる</span>
+          </button>
         </div>
 
       </div>
@@ -443,18 +459,6 @@
       </div>
     </dialog>
 
-        </div>
-
-        <div class="btn-container" style="margin-top: 20px; flex-direction: row; gap: 8px;">
-          <button id="btn-save-settings" class="btn btn-primary" style="flex: 1; padding: 12px 0; background: linear-gradient(135deg, var(--color-purple), var(--color-purple-dark)); box-shadow: 0 6px 0 var(--color-purple-dark); border-color: #ffffff; color: #ffffff;" aria-label="保存する">
-            <span>保存する</span>
-          </button>
-          <button id="btn-close-settings" class="btn" style="flex: 1; padding: 12px 0; background: none; border: 3px solid var(--color-text-muted); color: var(--color-text-muted); box-shadow: none;" aria-label="もどる">
-            <span>もどる</span>
-          </button>
-        </div>
-      </div>
-    </dialog>
 
   </main>
 

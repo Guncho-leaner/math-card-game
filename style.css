@@ -746,6 +746,30 @@ dialog.tutorial-modal[open]::backdrop {
   width: 100%;
 }
 
+/* Purple Suspend Button */
+.btn-purple {
+  background: linear-gradient(135deg, var(--color-purple), var(--color-purple-dark));
+  color: #ffffff;
+  box-shadow: 0 8px 0 var(--color-purple-dark), 0 12px 20px rgba(186, 104, 200, 0.3);
+}
+
+.btn-purple:active {
+  transform: translateY(6px);
+  box-shadow: 0 2px 0 var(--color-purple-dark), 0 4px 10px rgba(186, 104, 200, 0.3);
+}
+
+/* Outline Muted Quit Button */
+.btn-outline-muted {
+  background: none;
+  border: 3px solid var(--color-text-muted);
+  color: var(--color-text-muted);
+  box-shadow: none;
+}
+
+.btn-outline-muted:active {
+  transform: translateY(3px);
+}
+
 /* Respect user preference for reduced motion */
 @media (prefers-reduced-motion: reduce) {
   dialog.tutorial-modal,
