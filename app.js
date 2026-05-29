@@ -76,7 +76,7 @@ function getCachedAudio(path) {
     audio.preload = 'auto';
     audioCache[path] = audio;
   }
-  return audioCache[path].cloneNode(true);
+  return audioCache[path];
 }
 
 /**
@@ -151,6 +151,11 @@ function playAudioSequence(paths, callback = null) {
 
     const audio = getCachedAudio(path);
     activeAudioPlayer = audio;
+    try {
+      audio.load(); // Reset media element state to cleanly fix Safari recycling bugs
+    } catch (e) {
+      // Ignore load errors
+    }
     audio.currentTime = 0; // Reset playback position
 
     let resolved = false;
@@ -822,8 +827,21 @@ function startListening() {
   try {
     recognition.start();
   } catch (e) {
-    // Already running or permission issues
-    console.warn("Speech recognition start failed:", e);
+    // If it's already active or in process of stopping, retry after a short delay
+    if (e.name === 'InvalidStateError' || e.message.includes('already started')) {
+      console.warn("Speech recognition is in transition, retrying in 400ms...");
+      setTimeout(() => {
+        if (state.screen === 'GAME' && !state.isAnswered && !state.keypadActive) {
+          try {
+            recognition.start();
+          } catch (err) {
+            console.warn("Speech recognition retry failed:", err);
+          }
+        }
+      }, 400);
+    } else {
+      console.warn("Speech recognition start failed:", e);
+    }
   }
 }
 
