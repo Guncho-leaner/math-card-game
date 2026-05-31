@@ -52,7 +52,7 @@ let recognition = null;
 if (SpeechRecognition) {
   recognition = new SpeechRecognition();
   recognition.lang = 'ja-JP';
-  recognition.interimResults = false;
+  recognition.interimResults = true; // 暫定結果もリアルタイムに取得します
   recognition.maxAlternatives = 1;
 }
 
@@ -74,12 +74,12 @@ const audioCache = {};
  * Gets or creates a cached Audio object for the given path
  */
 function getCachedAudio(path) {
-  if (!audioCache[path]) {
-    const audio = new Audio(path);
-    audio.preload = 'auto';
-    audioCache[path] = audio;
-  }
-  return audioCache[path];
+  // ブラウザの HTTP キャッシュに頼るため、毎回新しい Audio オブジェクトを作成します。
+  // これにより、同一の Audio インスタンス使い回しによる Safari/Chrome の状態管理バグや、
+  // autoplay の信頼フラグ喪失問題を完全に回避します。
+  const audio = new Audio(path);
+  audio.preload = 'auto';
+  return audio;
 }
 
 /**
@@ -154,22 +154,37 @@ function playAudioSequence(paths, callback = null) {
 
     const audio = getCachedAudio(path);
     activeAudioPlayer = audio;
-    try {
-      audio.load(); // Reset media element state to cleanly fix Safari recycling bugs
-    } catch (e) {
-      // Ignore load errors
-    }
     audio.currentTime = 0; // Reset playback position
 
     let resolved = false;
+    let safetyTimeout = null;
 
     function handleNext() {
       if (resolved) return;
       resolved = true;
+      
+      if (safetyTimeout) {
+        clearTimeout(safetyTimeout);
+        safetyTimeout = null;
+      }
+      
       audio.onended = null;
       audio.onerror = null;
+      
+      try {
+        audio.pause();
+      } catch (e) {
+        // Ignore
+      }
+      
       playNext();
     }
+
+    // 各音声の再生に最大5秒のタイムアウトを設定し、フリーズを100%防止する
+    safetyTimeout = setTimeout(() => {
+      console.warn("Audio playback safety timeout triggered for:", path);
+      handleNext();
+    }, 5000);
 
     audio.onended = handleNext;
 
@@ -658,14 +673,17 @@ function nextQuestion() {
   updateGameUI();
   setMascotExpression('idle');
 
+  // 問題文の音声再生を開始する直前（UI更新完了後）に、即座に nextInProgress を false に戻します。
+  // 音声の再生中にユーザーが素早く回答を入力した場合でも、進行ロックが永久に解除されなくなる
+  // デッドロック現象を根本的かつ完全に防ぐことができます。
+  state.nextInProgress = false;
+
   // Trigger pre-rendered high-quality local voice sequence
   speakQuestion(state.currentQuestion, state.num1, state.operator, state.num2, () => {
     // Start listening AFTER speech playback has finished
     if (state.screen === 'GAME' && !state.isAnswered) {
       startListening();
     }
-    // Release the re-entrancy lock AFTER the speaking sequence completes
-    state.nextInProgress = false;
   });
 }
 
@@ -908,16 +926,49 @@ if (recognition) {
   };
 
   recognition.onresult = (event) => {
-    const transcript = event.results[0][0].transcript.trim();
-    console.log("Speech recognition result received:", transcript);
-    
-    const parsedNumber = parseSpeechToNumber(transcript);
-    if (parsedNumber !== null) {
-      handleAnswerEvaluation(parsedNumber);
-    } else {
-      // Recognized speech but couldn't parse a number (e.g. child said hello)
-      document.getElementById('feedback-message').textContent = 'すうじを おおきなこえで いってね！';
-      document.getElementById('feedback-message').style.color = 'var(--color-pink-dark)';
+    let interimTranscript = '';
+    let finalTranscript = '';
+    let isFinalResult = false;
+
+    // 暫定結果と確定結果をマージして最新の文字列を取得します
+    for (let i = event.resultIndex; i < event.results.length; ++i) {
+      const transcriptPart = event.results[i][0].transcript;
+      if (event.results[i].isFinal) {
+        finalTranscript += transcriptPart;
+        isFinalResult = true;
+      } else {
+        interimTranscript += transcriptPart;
+      }
+    }
+
+    const currentText = (finalTranscript + interimTranscript).trim();
+    console.log("Speech recognition text (current):", currentText, "isFinal:", isFinalResult);
+
+    if (currentText) {
+      // リアルタイムに最新の数字を解析します（連呼・言い直しに対応）
+      const parsedNumber = parseSpeechToNumber(currentText);
+      
+      if (parsedNumber !== null) {
+        // まだ回答が確定していない場合、画面の回答ボックスをリアルタイムで「上書き」更新します！
+        if (!state.isAnswered) {
+          const answerBox = document.getElementById('answer-box');
+          answerBox.textContent = parsedNumber;
+          
+          document.getElementById('feedback-message').textContent = `「 ${parsedNumber} 」って きこえたよ！ 👂`;
+          document.getElementById('feedback-message').style.color = 'var(--color-text)';
+        }
+
+        // 喋り終わり（確定）のタイミングで自動的に正誤判定に移行します
+        if (isFinalResult && !state.isAnswered) {
+          handleAnswerEvaluation(parsedNumber);
+        }
+      } else {
+        // 解析できなかった場合、確定したタイミングでのみ促しメッセージを出します
+        if (isFinalResult && !state.isAnswered) {
+          document.getElementById('feedback-message').textContent = 'すうじを おおきなこえで いってね！';
+          document.getElementById('feedback-message').style.color = 'var(--color-pink-dark)';
+        }
+      }
     }
   };
 
@@ -940,31 +991,91 @@ if (recognition) {
 }
 
 /**
- * Normalizes speech input and returns integer string or null
- * Handles numeric values, Japanese Kanji/Hiragana numbers.
- * @param {string} text - Speech transcription text
+ * 子供の連呼による繰り返し表現を正規化する（例: "333" -> "3", "1212" -> "12")
+ */
+function normalizeRepeatedDigits(text) {
+  if (/^\d+$/.test(text)) {
+    // 1桁〜2桁の繰り返しのパターンを検出して、最小の構成単位に直す
+    for (let len = 1; len <= 2; len++) {
+      if (text.length % len === 0) {
+        const unit = text.substring(0, len);
+        let isRepeat = true;
+        for (let i = len; i < text.length; i += len) {
+          if (text.substring(i, i + len) !== unit) {
+            isRepeat = false;
+            break;
+          }
+        }
+        if (isRepeat) {
+          return unit;
+        }
+      }
+    }
+  }
+  return text;
+}
+
+/**
+ * 日本語の数詞マップから、テキストに含まれる「最新（最も右側）」の数字を解析して返します。
+ * 長い単語（例: じゅうさん）が短い単語（例: さん）より優先されるようにします。
+ */
+function parseJapaneseNumFromEnd(text) {
+  let bestMatch = null;
+  let bestIndex = -1;
+  let matchLength = 0;
+
+  for (let key in JAPANESE_NUM_MAP) {
+    const idx = text.lastIndexOf(key);
+    if (idx !== -1) {
+      // より右側にあり、かつ単語が長いものを優先する
+      if (idx > bestIndex || (idx === bestIndex && key.length > matchLength)) {
+        bestIndex = idx;
+        bestMatch = JAPANESE_NUM_MAP[key];
+        matchLength = key.length;
+      }
+    }
+  }
+
+  return bestMatch;
+}
+
+/**
+ * 音声認識されたテキスト全体から、最新の「数字単語」を抽出して正規化して返します。
+ * @param {string} text - 音声認識されたテキスト
  */
 function parseSpeechToNumber(text) {
-  // Remove spaces
-  let cleanText = text.replace(/\s+/g, '');
+  if (!text) return null;
   
-  // 1. Direct Regex match for standard digits
-  const digitsMatch = cleanText.match(/\d+/);
-  if (digitsMatch) {
-    return parseInt(digitsMatch[0], 10);
-  }
+  // 1. スペースやカンマ、読点で分割し、一番最後の有効な数字を探す
+  // 子供が「さん、さん、さん」と連呼した場合や、言い直した場合の分割対策
+  const segments = text.split(/[\s,，、。．\-\+]+/);
+  
+  // 右側（末尾のセグメント）から順に走査する
+  for (let i = segments.length - 1; i >= 0; i--) {
+    let segment = segments[i].trim();
+    if (!segment) continue;
 
-  // 2. Direct mapping for exact words e.g. "ご" (5)
-  if (JAPANESE_NUM_MAP[cleanText] !== undefined) {
-    return JAPANESE_NUM_MAP[cleanText];
-  }
+    // 繰り返し数字を正規化 (例: "333" -> "3")
+    segment = normalizeRepeatedDigits(segment);
 
-  // 3. Scan transcription for sound variations
-  // E.g. "ごう" (often heard for 5), "しち" (7), etc.
-  for (let key in JAPANESE_NUM_MAP) {
-    if (cleanText.includes(key)) {
-      return JAPANESE_NUM_MAP[key];
+    // アラビア数字の直接マッチ
+    const digitsMatch = segment.match(/^\d+$/);
+    if (digitsMatch) {
+      return parseInt(digitsMatch[0], 10);
     }
+
+    // 日本語数詞の末尾からのマッチ
+    const jpNum = parseJapaneseNumFromEnd(segment);
+    if (jpNum !== null) {
+      return jpNum;
+    }
+  }
+
+  // 分割で引っかからなかった場合、文字列全体から日本語数詞の最新マッチを試みる
+  let cleanText = text.replace(/\s+/g, '');
+  const jpNumAll = parseJapaneseNumFromEnd(cleanText);
+  if (jpNumAll !== null) {
+    return jpNumAll;
   }
 
   return null;
