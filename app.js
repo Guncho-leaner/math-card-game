@@ -37,7 +37,10 @@ const state = {
   keypadActive: false,
   keypadInput: '',
   gameMode: 'ADDITION', // ADDITION, SUBTRACTION
-  gameLevel: 'TERM1' // TERM1, TERM2, TERM3
+  gameLevel: 'UPTO5', // UPTO5, UPTO10, UPTO15, UPTO20, UPTO25, UPTO30
+  quizType: 'NORMAL', // 'NORMAL' or 'FIXED'
+  fixedNumber: 1, // 1 to 20
+  presentedQuestions: [] // Array to track duplicate questions
 };
 
 // ==========================================
@@ -92,8 +95,8 @@ function preloadCommonAudio() {
     getCachedAudio(file);
   });
 
-  // Preload numbers 0 to 10
-  for (let i = 0; i <= 10; i++) {
+  // Preload numbers 0 to 30
+  for (let i = 0; i <= 30; i++) {
     getCachedAudio(`num_${i}.wav`);
   }
 
@@ -600,14 +603,19 @@ function navigateTo(screenName) {
 
 function showSelectStep(step) {
   document.querySelectorAll('.select-step').forEach(s => s.classList.remove('active'));
+  const modeText = state.gameMode === 'ADDITION' ? 'たしざん' : 'ひきざん';
+  
   if (step === 'mode') {
     document.getElementById('select-step-mode').classList.add('active');
+  } else if (step === 'type') {
+    document.getElementById('select-step-type').classList.add('active');
+    document.getElementById('select-type-title').textContent = `${modeText} を どうやって あそぶ？`;
   } else if (step === 'level') {
     document.getElementById('select-step-level').classList.add('active');
-    
-    // Update level selection header based on game mode
-    const modeText = state.gameMode === 'ADDITION' ? 'たしざん' : 'ひきざん';
     document.getElementById('select-level-title').textContent = `${modeText} の レベルを えらぼう！`;
+  } else if (step === 'fixed') {
+    document.getElementById('select-step-fixed').classList.add('active');
+    document.getElementById('select-fixed-title').textContent = `${modeText} の かずを えらぼう！`;
   }
 }
 
@@ -620,6 +628,7 @@ function startNewGame() {
   state.isAnswered = false;
   state.keypadInput = '';
   state.nextInProgress = false; // Reset lock for new game!
+  state.presentedQuestions = []; // Reset duplicate prevention list
   
   navigateTo('GAME');
   nextQuestion();
@@ -664,44 +673,63 @@ function generateEquation() {
   // Set operator based on chosen mode
   state.operator = state.gameMode === 'ADDITION' ? '+' : '-';
 
-  if (state.gameMode === 'ADDITION') {
-    if (state.gameLevel === 'TERM1') {
-      // 1がっき: Answers up to 10 (A + B <= 10)
-      const correct = Math.floor(Math.random() * 9) + 2; // sum: 2 to 10
-      state.num1 = Math.floor(Math.random() * (correct - 1)) + 1; // 1 to correct-1
-      state.num2 = correct - state.num1;
-      state.correctAnswer = correct;
-    } else if (state.gameLevel === 'TERM2') {
-      // 2がっき: Answers up to 20 (mainly 11 to 20)
-      const correct = Math.floor(Math.random() * 10) + 11; // sum: 11 to 20
-      state.num1 = Math.floor(Math.random() * (correct - 2)) + 1; // 1 to correct-1
-      state.num2 = correct - state.num1;
-      state.correctAnswer = correct;
+  let attempts = 0;
+  const maxAttempts = 50;
+
+  while (attempts < maxAttempts) {
+    let num1 = 0;
+    let num2 = 0;
+    let correctAnswer = 0;
+
+    if (state.quizType === 'FIXED') {
+      // かず固定の クイズ (Learning mode)
+      // The second number is fixed
+      num2 = state.fixedNumber;
+
+      if (state.gameMode === 'ADDITION') {
+        // X + Fixed = Answer
+        // num1 is randomized between 1 and 10 (guaranteed different each time by duplicate prevention)
+        num1 = Math.floor(Math.random() * 10) + 1; // 1 to 10
+        correctAnswer = num1 + num2;
+      } else {
+        // X - Fixed = Answer
+        // correctAnswer is randomized between 1 and 10 (so X ranges from Fixed+1 to Fixed+10)
+        correctAnswer = Math.floor(Math.random() * 10) + 1; // 1 to 10
+        num1 = correctAnswer + num2;
+      }
     } else {
-      // 3がっき: Answers above 20 (double digit + single/double digit, e.g. 21 to 99)
-      state.num1 = Math.floor(Math.random() * 60) + 15; // 15 to 74
-      state.num2 = Math.floor(Math.random() * 20) + 10; // 10 to 29
-      state.correctAnswer = state.num1 + state.num2; // always > 20
+      // ふつうの クイズ (Normal mode with answers up to 5, 10, 15, 20, 25, 30)
+      let limit = 10;
+      if (state.gameLevel === 'UPTO5') limit = 5;
+      else if (state.gameLevel === 'UPTO10') limit = 10;
+      else if (state.gameLevel === 'UPTO15') limit = 15;
+      else if (state.gameLevel === 'UPTO20') limit = 20;
+      else if (state.gameLevel === 'UPTO25') limit = 25;
+      else if (state.gameLevel === 'UPTO30') limit = 30;
+
+      if (state.gameMode === 'ADDITION') {
+        // A + B = Answer where Answer <= limit, Answer >= 2
+        correctAnswer = Math.floor(Math.random() * (limit - 1)) + 2; // 2 to limit
+        num1 = Math.floor(Math.random() * (correctAnswer - 1)) + 1; // 1 to correctAnswer-1
+        num2 = correctAnswer - num1;
+      } else {
+        // A - B = Answer where A <= limit, Answer >= 1
+        num1 = Math.floor(Math.random() * (limit - 1)) + 2; // 2 to limit
+        num2 = Math.floor(Math.random() * (num1 - 1)) + 1; // 1 to num1-1
+        correctAnswer = num1 - num2;
+      }
     }
-  } else {
-    // SUBTRACTION
-    if (state.gameLevel === 'TERM1') {
-      // 1がっき: Subtraction within 10 (A <= 10, Answer >= 1)
-      state.num1 = Math.floor(Math.random() * 9) + 2; // 2 to 10
-      state.num2 = Math.floor(Math.random() * (state.num1 - 1)) + 1; // 1 to num1-1
-      state.correctAnswer = state.num1 - state.num2;
-    } else if (state.gameLevel === 'TERM2') {
-      // 2がっき: Subtraction within 20 (11 <= A <= 20, Answer >= 1)
-      state.num1 = Math.floor(Math.random() * 10) + 11; // A: 11 to 20
-      state.num2 = Math.floor(Math.random() * (state.num1 - 1)) + 1; // 1 to num1-1
-      state.correctAnswer = state.num1 - state.num2;
-    } else {
-      // 3がっき: Subtraction with answers above 20 (A - B = Answer, where Answer >= 20)
-      const correct = Math.floor(Math.random() * 50) + 20; // Answer: 20 to 69
-      state.num2 = Math.floor(Math.random() * 25) + 5; // B: 5 to 29
-      state.num1 = correct + state.num2; // A: 25 to 98
-      state.correctAnswer = correct;
+
+    // Check if this equation has already been presented in the current game
+    const eqString = `${num1}${state.operator}${num2}`;
+    if (!state.presentedQuestions.includes(eqString) || attempts === maxAttempts - 1) {
+      state.num1 = num1;
+      state.num2 = num2;
+      state.correctAnswer = correctAnswer;
+      state.presentedQuestions.push(eqString);
+      break;
     }
+    attempts++;
   }
 }
 
@@ -1010,16 +1038,31 @@ document.addEventListener('DOMContentLoaded', () => {
   // MODE SELECTION BUTTONS (Step 1)
   document.getElementById('btn-select-add').addEventListener('click', () => {
     state.gameMode = 'ADDITION';
-    showSelectStep('level');
+    showSelectStep('type');
   });
 
   document.getElementById('btn-select-sub').addEventListener('click', () => {
     state.gameMode = 'SUBTRACTION';
-    showSelectStep('level');
+    showSelectStep('type');
   });
 
   document.getElementById('btn-select-mode-back').addEventListener('click', () => {
     navigateTo('TITLE');
+  });
+
+  // QUIZ TYPE SELECTION BUTTONS (Step 1.5)
+  document.getElementById('btn-type-normal').addEventListener('click', () => {
+    state.quizType = 'NORMAL';
+    showSelectStep('level');
+  });
+
+  document.getElementById('btn-type-fixed').addEventListener('click', () => {
+    state.quizType = 'FIXED';
+    showSelectStep('fixed');
+  });
+
+  document.getElementById('btn-select-type-back').addEventListener('click', () => {
+    showSelectStep('mode');
   });
 
   // LEVEL SELECTION BUTTONS (Step 2)
@@ -1032,7 +1075,20 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('btn-select-level-back').addEventListener('click', () => {
-    showSelectStep('mode');
+    showSelectStep('type');
+  });
+
+  // FIXED NUMBER SELECTION BUTTONS (Step 2.5)
+  document.querySelectorAll('.btn-fixed-num').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const targetBtn = e.target.closest('.btn-fixed-num');
+      state.fixedNumber = parseInt(targetBtn.getAttribute('data-num'), 10);
+      startNewGame();
+    });
+  });
+
+  document.getElementById('btn-select-fixed-back').addEventListener('click', () => {
+    showSelectStep('type');
   });
 
   // RESULTS SCREEN CONTROLS

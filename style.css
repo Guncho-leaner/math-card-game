@@ -770,6 +770,43 @@ dialog.tutorial-modal[open]::backdrop {
   transform: translateY(3px);
 }
 
+/* Level Button Grids */
+.level-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  width: 100%;
+  margin-top: 20px;
+}
+
+/* Circle Fixed Number Grid */
+.fixed-num-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.btn-circle {
+  aspect-ratio: 1 / 1;
+  border-radius: 50% !important;
+  padding: 0 !important;
+  font-family: var(--font-math);
+  font-size: 1.4rem !important;
+  font-weight: 800;
+  width: 100%;
+  max-width: 64px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, var(--color-blue), var(--color-blue-dark));
+  color: #ffffff;
+  box-shadow: 0 6px 0 var(--color-blue-dark);
+}
+.btn-circle:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 var(--color-blue-dark);
+}
+
 /* Respect user preference for reduced motion */
 @media (prefers-reduced-motion: reduce) {
   dialog.tutorial-modal,

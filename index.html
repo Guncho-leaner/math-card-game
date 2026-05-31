@@ -7,7 +7,7 @@
   <meta name="description" content="小学生向けの一桁の足し算・引き算カードゲーム。音声入力で直感的に楽しく算数を勉強できます。かわいい動物たちと一緒に10問全問正解を目指そう！">
   
   <!-- CSS Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=1.0.4">
+  <link rel="stylesheet" href="style.css?v=1.0.5">
   
   <!-- Web App Manifest for Mobile Installation -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -137,27 +137,89 @@
           </div>
         </div>
 
-        <!-- Step 2: Level Select (1がっき / 2がっき / 3がっき) -->
-        <div id="select-step-level" class="select-step">
-          <h2 id="select-level-title">レベルを えらぼう！</h2>
-          <p>どれに チャレンジする？</p>
+        <!-- Step 1.5: Quiz Type Select (ふつう / かず固定) -->
+        <div id="select-step-type" class="select-step">
+          <h2 id="select-type-title">クイズを えらぼう！</h2>
+          <p>どちらの クイズにする？</p>
           <div class="btn-container">
-            <button class="btn btn-level" data-level="TERM1" style="background: linear-gradient(135deg, #a8e6cf, #56ab2f); box-shadow: 0 8px 0 #3d8c1b; border-color: #ffffff; color: #ffffff;" aria-label="1がっき (こたえが 10まで)">
-              <span class="btn-icon">🌱</span>
-              <span>1がっき (こたえが10まで)</span>
+            <button id="btn-type-normal" class="btn btn-primary" aria-label="ふつうの クイズ">
+              <span class="btn-icon">🌟</span>
+              <span>ふつうの クイズ</span>
             </button>
-            <button class="btn btn-level" data-level="TERM2" style="background: linear-gradient(135deg, #ffd3b6, #ff9900); box-shadow: 0 8px 0 #cc7a00; border-color: #ffffff; color: #ffffff;" aria-label="2がっき (こたえが 20まで)">
-              <span class="btn-icon">🌸</span>
-              <span>2がっき (こたえが20まで)</span>
+            <button id="btn-type-fixed" class="btn btn-secondary" aria-label="かず固定の クイズ">
+              <span class="btn-icon">📌</span>
+              <span>かず固定の クイズ</span>
             </button>
-            <button class="btn btn-level" data-level="TERM3" style="background: linear-gradient(135deg, #ff8da1, #e91e63); box-shadow: 0 8px 0 #c2185b; border-color: #ffffff; color: #ffffff;" aria-label="3がっき (こたえが 20いじょう)">
-              <span class="btn-icon">🔥</span>
-              <span>3がっき (こたえが20いじょう)</span>
-            </button>
-            <button id="btn-select-level-back" class="btn" style="background: none; border: 3px solid var(--color-text-muted); color: var(--color-text-muted); box-shadow: none;" aria-label="まえにもどる">
+            <button id="btn-select-type-back" class="btn" style="background: none; border: 3px solid var(--color-text-muted); color: var(--color-text-muted); box-shadow: none;" aria-label="まえにもどる">
               <span>もどる</span>
             </button>
           </div>
+        </div>
+
+        <!-- Step 2: Level Select (5, 10, 15, 20, 25, 30) -->
+        <div id="select-step-level" class="select-step">
+          <h2 id="select-level-title">レベルを えらぼう！</h2>
+          <p>どれに チャレンジする？</p>
+          <div class="level-grid">
+            <button class="btn btn-level btn-level-custom" data-level="UPTO5" style="background: linear-gradient(135deg, #a8e6cf, #56ab2f); box-shadow: 0 6px 0 #3d8c1b; border-color: #ffffff; color: #ffffff;" aria-label="こたえが 5まで">
+              <span class="btn-icon">🌱</span>
+              <span>こたえが 5まで</span>
+            </button>
+            <button class="btn btn-level btn-level-custom" data-level="UPTO10" style="background: linear-gradient(135deg, #a8e6cf, #38ef7d); box-shadow: 0 6px 0 #11998e; border-color: #ffffff; color: #ffffff;" aria-label="こたえが 10まで">
+              <span class="btn-icon">🌸</span>
+              <span>こたえが 10まで</span>
+            </button>
+            <button class="btn btn-level btn-level-custom" data-level="UPTO15" style="background: linear-gradient(135deg, #ffd3b6, #ff9900); box-shadow: 0 6px 0 #cc7a00; border-color: #ffffff; color: #ffffff;" aria-label="こたえが 15まで">
+              <span class="btn-icon">🌟</span>
+              <span>こたえが 15まで</span>
+            </button>
+            <button class="btn btn-level btn-level-custom" data-level="UPTO20" style="background: linear-gradient(135deg, #ff8da1, #e91e63); box-shadow: 0 6px 0 #c2185b; border-color: #ffffff; color: #ffffff;" aria-label="こたえが 20まで">
+              <span class="btn-icon">🔥</span>
+              <span>こたえが 20まで</span>
+            </button>
+            <button class="btn btn-level btn-level-custom" data-level="UPTO25" style="background: linear-gradient(135deg, #e1b12c, #fbc531); box-shadow: 0 6px 0 #b38f12; border-color: #ffffff; color: #ffffff;" aria-label="こたえが 25まで">
+              <span class="btn-icon">👑</span>
+              <span>こたえが 25まで</span>
+            </button>
+            <button class="btn btn-level btn-level-custom" data-level="UPTO30" style="background: linear-gradient(135deg, #8c7ae6, #9c88ff); box-shadow: 0 6px 0 #7158e2; border-color: #ffffff; color: #ffffff;" aria-label="こたえが 30まで">
+              <span class="btn-icon">🚀</span>
+              <span>こたえが 30まで</span>
+            </button>
+          </div>
+          <button id="btn-select-level-back" class="btn" style="width: 100%; margin-top: 16px; background: none; border: 3px solid var(--color-text-muted); color: var(--color-text-muted); box-shadow: none;" aria-label="まえにもどる">
+            <span>もどる</span>
+          </button>
+        </div>
+
+        <!-- Step 2.5: Fixed Number Select (1から20) -->
+        <div id="select-step-fixed" class="select-step">
+          <h2 id="select-fixed-title">固定する かずを えらぼう！</h2>
+          <p>1 から 20 のなかから えらんでね！</p>
+          <div class="fixed-num-grid">
+            <button class="btn btn-circle btn-fixed-num" data-num="1">1</button>
+            <button class="btn btn-circle btn-fixed-num" data-num="2">2</button>
+            <button class="btn btn-circle btn-fixed-num" data-num="3">3</button>
+            <button class="btn btn-circle btn-fixed-num" data-num="4">4</button>
+            <button class="btn btn-circle btn-fixed-num" data-num="5">5</button>
+            <button class="btn btn-circle btn-fixed-num" data-num="6">6</button>
+            <button class="btn btn-circle btn-fixed-num" data-num="7">7</button>
+            <button class="btn btn-circle btn-fixed-num" data-num="8">8</button>
+            <button class="btn btn-circle btn-fixed-num" data-num="9">9</button>
+            <button class="btn btn-circle btn-fixed-num" data-num="10">10</button>
+            <button class="btn btn-circle btn-fixed-num" data-num="11">11</button>
+            <button class="btn btn-circle btn-fixed-num" data-num="12">12</button>
+            <button class="btn btn-circle btn-fixed-num" data-num="13">13</button>
+            <button class="btn btn-circle btn-fixed-num" data-num="14">14</button>
+            <button class="btn btn-circle btn-fixed-num" data-num="15">15</button>
+            <button class="btn btn-circle btn-fixed-num" data-num="16">16</button>
+            <button class="btn btn-circle btn-fixed-num" data-num="17">17</button>
+            <button class="btn btn-circle btn-fixed-num" data-num="18">18</button>
+            <button class="btn btn-circle btn-fixed-num" data-num="19">19</button>
+            <button class="btn btn-circle btn-fixed-num" data-num="20">20</button>
+          </div>
+          <button id="btn-select-fixed-back" class="btn" style="width: 100%; margin-top: 20px; background: none; border: 3px solid var(--color-text-muted); color: var(--color-text-muted); box-shadow: none;" aria-label="まえにもどる">
+            <span>もどる</span>
+          </button>
         </div>
 
       </div>
@@ -463,6 +525,6 @@
   </main>
 
   <!-- Application JS Script -->
-  <script src="app.js?v=1.0.4"></script>
+  <script src="app.js?v=1.0.5"></script>
 </body>
 </html>
